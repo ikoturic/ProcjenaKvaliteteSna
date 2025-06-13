@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+    <meta charset="UTF-8" />
+    <title>Procjena Kvalitete Sna</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #e0f7fa, #fff);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 30px 40px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 90%;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #00796b;
+        }
+
+        form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px 20px; /* veći vertikalni razmak */
+        }
+
+        form > div {
+            display: flex;
+            flex-direction: column;
+            padding: 0 10px; /* dodan unutarnji razmak lijevo-desno oko inputa */
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+        }
+
+        .full-width {
+            grid-column: span 2;
+            text-align: center;
+        }
+
+        button {
+            margin-top: 15px;
+            padding: 10px 25px;
+            font-size: 1rem;
+            border: none;
+            background-color: #00796b;
+            color: white;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #004d40;
+        }
+
+        #result {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+            min-height: 1.5em;
+        }
+
+        @media (max-width: 480px) {
+            form {
+                grid-template-columns: 1fr;
+            }
+            .full-width {
+                grid-column: span 1;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Procjena Kvalitete Sna</h2>
+    <form id="sleepForm">
+        <div>
+            <label for="age">Dob:</label>
+            <input type="number" name="age" required />
+        </div>
+        <div>
+            <label for="gender">Spol (0=Muški, 1=Ženski):</label>
+            <input type="number" name="gender" required />
+        </div>
+        <div>
+            <label for="sleep_duration">Trajanje sna (sati):</label>
+            <input type="number" name="sleep_duration" required />
+        </div>
+        <div>
+            <label for="rem_sleep_percentage">REM postotak:</label>
+            <input type="number" name="rem_sleep_percentage" required />
+        </div>
+        <div>
+            <label for="deep_sleep_percentage">Duboki san (%):</label>
+            <input type="number" name="deep_sleep_percentage" required />
+        </div>
+        <div>
+            <label for="light_sleep_percentage">Lagani san (%):</label>
+            <input type="number" name="light_sleep_percentage" required />
+        </div>
+        <div>
+            <label for="awakenings">Buđenja:</label>
+            <input type="number" name="awakenings" required />
+        </div>
+        <div>
+            <label for="caffeine_consumption">Kofein (0–3):</label>
+            <input type="number" name="caffeine_consumption" required />
+        </div>
+        <div>
+            <label for="alcohol_consumption">Alkohol (0–3):</label>
+            <input type="number" name="alcohol_consumption" required />
+        </div>
+        <div>
+            <label for="smoking_status">Pušenje (0=Ne, 1=Da):</label>
+            <input type="number" name="smoking_status" required />
+        </div>
+        <div>
+            <label for="exercise_frequency">Tjelesna aktivnost (puta/tj.):</label>
+            <input type="number" name="exercise_frequency" required />
+        </div>
+        <div>
+            <label for="wake">Vrijeme buđenja (u minutama):</label>
+            <input type="number" name="wake" required />
+        </div>
+        <div>
+            <label for="bed">Vrijeme odlaska na spavanje (u minutama):</label>
+            <input type="number" name="bed" required />
+        </div>
+        <div class="full-width">
+            <button type="submit">Pošalji</button>
+        </div>
+    </form>
+
+    <div id="result"></div>
+</div>
+
+<script>
+    document.getElementById("sleepForm").addEventListener("submit", async function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(e.target);
+        const data = {};
+        formData.forEach((value, key) => {
+            data[key] = parseInt(value);
+        });
+
+        const payload = {
+            Inputs: {
+                input1: [data]
+            },
+            GlobalParameters: {}
+        };
+
+        try {
+            const response = await fetch("http://localhost:3000/predict", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error("Greška u dohvaćanju podataka.");
+            }
+
+            const result = await response.json();
+            const scoredLabel = result.Results.WebServiceOutput0[0]["Scored Labels"];
+
+            let kvaliteta;
+            switch (scoredLabel) {
+                case 1:
+                    kvaliteta = "Loša kvaliteta sna 😴";
+                    break;
+                case 2:
+                    kvaliteta = "Prosječna kvaliteta sna 🙂";
+                    break;
+                case 3:
+                    kvaliteta = "Dobra kvaliteta sna 😃";
+                    break;
+                default:
+                    kvaliteta = "Nepoznata";
+                    break;
+            }
+
+            document.getElementById("result").innerText = "Vaša procijenjena kvaliteta sna je: " + kvaliteta;
+        } catch (error) {
+            document.getElementById("result").innerText = "Greška: " + error.message;
+        }
+    });
+</script>
+</body>
+</html>
