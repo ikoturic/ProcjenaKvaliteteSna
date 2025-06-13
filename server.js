@@ -1,11 +1,13 @@
-// server.js
 const express = require("express");
 const cors = require("cors");
 const fetch = require("node-fetch"); // npm install node-fetch@2
+const path = require("path");
+
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static(__dirname)); // posluži index.html i sve druge datoteke iz iste mape
 
 const AZURE_URL = "http://f2ffe6b0-de30-4704-ab56-52c823bcb9ce.westeurope.azurecontainer.io/score";
 const API_KEY = "y11k9PZoXCxNiLnNl57BxWz60byJdD56";
@@ -26,6 +28,10 @@ app.post("/predict", async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
+});
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
 app.listen(3000, () => console.log("Server running on http://localhost:3000"));
